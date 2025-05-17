@@ -1,0 +1,19 @@
+# 5/5 iterations complete ✅ (113.93s)
+# Results saved to runs\detect\tune
+# Best fitness=0.0 observed at iteration 1
+# Best fitness metrics are {}
+# Best fitness model is runs\detect\train
+# Best fitness hyperparameters are printed below.
+
+lr0: 0.01
+degrees: 0.0
+weight_decay: 0.0005
+momentum: 0.937
+box: 7.5
+cls: 0.5
+dfl: 1.5
+hsv_h: 0.015
+hsv_s: 0.5
+hsv_v: 0.4
+translate: 0.1
+scale: 0.5
