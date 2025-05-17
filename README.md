@@ -67,6 +67,6 @@ model.train(
 ```
 
 结果:
-![results.png](.\runs\detect\train11\results.png)
+![results.png](https://github.com/Ciall0o0/yolohands/blob/master/runs/detect/train11/results.png)
 # 5.推理
 使用[streamlit](https://streamlit.io/)创建一个简单的web应用,可参考[https://docs.ultralytics.com/zh/guides/streamlit-live-inference/#streamlit-application-code](https://docs.ultralytics.com/zh/guides/streamlit-live-inference/#streamlit-application-code)
