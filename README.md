@@ -44,7 +44,8 @@ translate: 0.1
 scale: 0.5
 ```
 使用ray tune进行超参数调整,需要安装ray[tune]库
-ray tune: [https://docs.ray.io/en/latest/tune/index.html](https://docs.ray.io/en/latest/tune/index.html)和
+
+ray tune: 参考[https://docs.ray.io/en/latest/tune/index.html](https://docs.ray.io/en/latest/tune/index.html)和
 [https://docs.ultralytics.com/integrations/ray-tune/](https://docs.ultralytics.com/integrations/ray-tune/)
 # 4.训练
 参数解释:[https://blog.csdn.net/qq_37553692/article/details/130898732](https://blog.csdn.net/qq_37553692/article/details/130898732)
@@ -70,3 +71,21 @@ model.train(
 ![results.png](https://github.com/Ciall0o0/yolohands/blob/master/runs/detect/train11/results.png)
 # 5.推理
 使用[streamlit](https://streamlit.io/)创建一个简单的web应用,可参考[https://docs.ultralytics.com/zh/guides/streamlit-live-inference/#streamlit-application-code](https://docs.ultralytics.com/zh/guides/streamlit-live-inference/#streamlit-application-code)
+在ultralytics库中包含一个基础演示,我改动了一部分,增添了fps显示与一些处理机制,效果如下: 
+![截图](https://github.com/Ciall0o0/yolohands/blob/master/屏幕截图.png)
+
+## 使用方法
+```
+git clone https://github.com/Ciall0o0/yolohands.git
+cd yolohands
+uv sync
+```
+有关uv使用,参考[https://zhuanlan.zhihu.com/p/1888904532131575259](https://zhuanlan.zhihu.com/p/1888904532131575259)
+配置好环境后,修改fullprocess.py中的base_path,然后
+```
+uv run fullprocess.py
+```
+or
+```
+python fullprocess.py
+```
