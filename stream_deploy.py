@@ -9,6 +9,8 @@ from ultralytics.utils import LOGGER
 from ultralytics.utils.checks import check_requirements
 import os
 import torch
+import time
+import warnings
 torch.classes.__path__ = [os.path.join(torch.__path__[0], torch.classes.__file__)]
 ASSETS_NAMES = frozenset(
         [f"best.pt"]
@@ -44,9 +46,12 @@ class Inference:
         self.vid_file_name = None  # Video file name or webcam index
         self.selected_ind = []  # List of selected class indices for detection
         self.model = None  # YOLO model instance
-
         self.temp_dict = {"model": None, **kwargs}
         self.model_path = None  # Model file path
+        self.fps = 0
+        self.prev_time = 0
+        self.fps_display = None
+
         if self.temp_dict["model"] is not None:
             self.model_path = self.temp_dict["model"]
         if "processed_frames" not in st.session_state:
@@ -77,7 +82,15 @@ class Inference:
         self.st.markdown(sub_title_cfg, unsafe_allow_html=True)
         self.st.title("Ultralytics YOLO Streamlit应用")
         self.st.subheader("实时摄像头目标检测与跟踪")
-
+        
+    def update_fps(self):
+        """Update the FPS value."""
+        current_time = time.time()
+        if self.prev_time != 0:
+            self.fps = 1 / (current_time - self.prev_time)
+        self.prev_time = current_time
+        self.fps_display.text(f"FPS: {self.fps:.2f}")  # Display FPS in sidebar
+        
     def sidebar(self):
         """Configure the Streamlit sidebar for model and inference settings."""
         with self.st.sidebar:  # Add Ultralytics LOGO
@@ -89,17 +102,16 @@ class Inference:
             "Video Source",
             ("webcam", "video"),
         )  # Add source selection dropdown
-        self.camsearch = self.st.sidebar.selectbox("摄像头选择", self.getcamsearch())
         self.enable_trk = self.st.sidebar.radio("启用跟踪", ("是", "否"), index=1)  # Enable object tracking
         self.conf = float(
             self.st.sidebar.slider("置信度阈值", 0.0, 1.0, self.conf, 0.01)
         )  # Slider for confidence
         self.iou = float(self.st.sidebar.slider("IoU 阈值", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
-        self.st.sidebar.text(f"已处理帧数: {st.session_state.processed_frames}")
 
         col1, col2 = self.st.columns(2)  # Create two columns for displaying frames
         self.org_frame = col1.empty()  # Container for original frame
         self.ann_frame = col2.empty()  # Container for annotated frame
+        self.fps_display = self.st.sidebar.empty()
 
     # 文件上传处理
     def source_upload(self):
@@ -121,12 +133,12 @@ class Inference:
     def getcamsearch(self):
         # 自动检测可用摄像头索引
         indices = []
-        for i in range(10):  # 尝试前10个索引
+        for i in range(5):  # 尝试前5个索引
             cap = cv2.VideoCapture(i)
             if cap.isOpened():
                 indices.append(i)
                 cap.release()
-            if len(indices) >= 5:  # 发现足够多的摄像头后停止
+            if len(indices) >= 2:  # 发现足够多的摄像头后停止
                 break
         return indices
 
@@ -152,7 +164,7 @@ class Inference:
 
     def inference(self):
         """Perform real-time object detection inference on video or webcam feed."""
-        self.web_ui()  # Initialize the web interface
+        self.web_ui() # Initialize the web interface 
         self.sidebar()  # Create the sidebar
         self.source_upload()  # Upload the video source
         self.configure()  # Configure the app
@@ -170,17 +182,14 @@ class Inference:
                 self.st.error("Could not open webcam or video source.")
                 return
 
-            frame_count = 0
             try:
                 while cap.isOpened() and not stop_button_pressed:
                     success, frame = cap.read()
                     if not success:
                         self.st.warning("Failed to read frame from webcam. Please verify the webcam is connected properly.")
                         break
-
-                    frame_count += 1
-                    self.st.sidebar.text(f"Processed Frames: {frame_count}")
-
+                    self.update_fps()
+                    
                     # Process frame with model
                     if self.enable_trk == "Yes":
                         results = self.model.track(

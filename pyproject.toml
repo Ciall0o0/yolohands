@@ -15,7 +15,6 @@ dependencies = [
     "torchaudio>=2.7.0",
     "torchvision>=0.22.0",
     "ultralytics>=8.3.137",
-    "wandb>=0.19.11",
 ]
 [tool.uv.sources]
 torch = [
