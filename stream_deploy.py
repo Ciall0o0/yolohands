@@ -1,14 +1,15 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-import io
 import os
 from typing import Any, List
-
+import tempfile
 import cv2
-import numpy as np
 import streamlit as st
 from ultralytics import YOLO
 from ultralytics.utils import LOGGER
 from ultralytics.utils.checks import check_requirements
+import os
+import torch
+torch.classes.__path__ = [os.path.join(torch.__path__[0], torch.classes.__file__)]
 ASSETS_NAMES = frozenset(
         [f"best.pt"]
         +[f"last.pt"]
@@ -48,6 +49,10 @@ class Inference:
         self.model_path = None  # Model file path
         if self.temp_dict["model"] is not None:
             self.model_path = self.temp_dict["model"]
+        if "processed_frames" not in st.session_state:
+            st.session_state.processed_frames = 0
+        if "model" not in st.session_state:
+            st.session_state.model = None
 
         LOGGER.info(f"Ultralytics Solutions: ✅ {self.temp_dict}")
 
@@ -65,46 +70,65 @@ class Inference:
         of Ultralytics YOLO! 🚀</h4></div>"""
 
         # Set html page configuration and append custom HTML
-        self.st.set_page_config(page_title="Ultralytics Streamlit App", layout="wide")
+        self.st.set_page_config(page_title='Hands Detector', page_icon='✌',
+                   layout='centered', initial_sidebar_state='expanded')
         self.st.markdown(menu_style_cfg, unsafe_allow_html=True)
         self.st.markdown(main_title_cfg, unsafe_allow_html=True)
         self.st.markdown(sub_title_cfg, unsafe_allow_html=True)
+        self.st.title("Ultralytics YOLO Streamlit应用")
+        self.st.subheader("实时摄像头目标检测与跟踪")
 
     def sidebar(self):
         """Configure the Streamlit sidebar for model and inference settings."""
         with self.st.sidebar:  # Add Ultralytics LOGO
-            logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
+            logo = "logo.svg"
             self.st.image(logo, width=250)
 
         self.st.sidebar.title("User Configuration")  # Add elements to vertical setting menu
         self.source = self.st.sidebar.selectbox(
-            "Video",
+            "Video Source",
             ("webcam", "video"),
         )  # Add source selection dropdown
-        self.enable_trk = self.st.sidebar.radio("Enable Tracking", ("Yes", "No"))  # Enable object tracking
+        self.camsearch = self.st.sidebar.selectbox("摄像头选择", self.getcamsearch())
+        self.enable_trk = self.st.sidebar.radio("启用跟踪", ("是", "否"), index=1)  # Enable object tracking
         self.conf = float(
-            self.st.sidebar.slider("Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
+            self.st.sidebar.slider("置信度阈值", 0.0, 1.0, self.conf, 0.01)
         )  # Slider for confidence
-        self.iou = float(self.st.sidebar.slider("IoU Threshold", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
+        self.iou = float(self.st.sidebar.slider("IoU 阈值", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
+        self.st.sidebar.text(f"已处理帧数: {st.session_state.processed_frames}")
 
         col1, col2 = self.st.columns(2)  # Create two columns for displaying frames
         self.org_frame = col1.empty()  # Container for original frame
         self.ann_frame = col2.empty()  # Container for annotated frame
 
+    # 文件上传处理
     def source_upload(self):
-        """Handle video file uploads through the Streamlit interface."""
         self.vid_file_name = ""
         if self.source == "video":
             vid_file = self.st.sidebar.file_uploader("Upload Video File", type=["mp4", "mov", "avi", "mkv"])
             if vid_file is not None:
-                temp_filename = f"temp_{os.path.splitext(vid_file.name)[0]}_{hash(vid_file)}.mp4"
-                g = io.BytesIO(vid_file.read())  # BytesIO Object
-                with open(temp_filename, "wb") as out:  # Open temporary file as bytes
-                    out.write(g.read())  # Read bytes into file
-                self.vid_file_name = temp_filename
+                # 使用tempfile生成唯一文件名
+                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+                    tmp.write(vid_file.read())
+                    self.vid_file_name = tmp.name
         elif self.source == "webcam":
-            self.vid_file_name = 0  # Use webcam index 0
-        pass
+            # 添加摄像头索引选择
+            camera_indices = self.getcamsearch()
+            self.camsearch = self.st.sidebar.selectbox("选择摄像头", camera_indices)
+            self.vid_file_name = self.camsearch
+            pass
+
+    def getcamsearch(self):
+        # 自动检测可用摄像头索引
+        indices = []
+        for i in range(10):  # 尝试前10个索引
+            cap = cv2.VideoCapture(i)
+            if cap.isOpened():
+                indices.append(i)
+                cap.release()
+            if len(indices) >= 5:  # 发现足够多的摄像头后停止
+                break
+        return indices
 
     def configure(self):
         """Configure the model and load selected classes for inference."""
@@ -160,10 +184,11 @@ class Inference:
                     # Process frame with model
                     if self.enable_trk == "Yes":
                         results = self.model.track(
-                            frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, persist=True
+                            frame, conf=self.conf, iou=self.iou, classes=self.selected_ind,
+                            tracker="bytetrack.yaml", persist=True, stream=True
                         )
                     else:
-                        results = self.model(frame, conf=self.conf, iou=self.iou, classes=self.selected_ind)
+                        results = self.model(frame, conf=self.conf, iou=self.iou, classes=self.selected_ind, imgsz=640)
 
                     annotated_frame = results[0].plot()  # Add annotations on frame
 
