@@ -1,4 +1,7 @@
 ### Yolohands
+### 本人大一小登，欢迎各位大佬指正！
+![miku](https://img.picui.cn/free/2025/05/19/682ae90fc47ce.gif)
+
 # 1.下载数据集
 OpenDataLab/FreiHAND:[https://opendatalab.com/OpenDataLab/FreiHAND/tree/main](https://opendatalab.com/OpenDataLab/FreiHAND/tree/main)
 # 2.处理数据集
