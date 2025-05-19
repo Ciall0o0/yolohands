@@ -72,11 +72,11 @@ model.train(
 
 结果:(25 epochs tune+100 epochs train)
 
-![results.png](https://github.com/Ciall0o0/yolohands/blob/master/runs/detect/train13/results.png)
+![results.png](https://img.picui.cn/free/2025/05/19/682b396a8ef00.png)
 # 5.推理
 使用[streamlit](https://streamlit.io/)创建一个简单的web应用,可参考[https://docs.ultralytics.com/zh/guides/streamlit-live-inference/#streamlit-application-code](https://docs.ultralytics.com/zh/guides/streamlit-live-inference/#streamlit-application-code)
 在ultralytics库中包含一个基础演示,我改动了一部分,增添了fps显示与一些处理机制,效果如下: 
-![截图](https://github.com/Ciall0o0/yolohands/blob/master/屏幕截图.png)
+![截图](https://hv.z.wiki/autoupload/20250519/txg0/2544X1464/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE.png)
 
 ## 使用方法
 ```
